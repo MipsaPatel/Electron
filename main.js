@@ -1,16 +1,22 @@
 const electron = require('electron')
 // Module to control application life.
 const app = electron.app
+
+const {ipcMain} = require('electron')
+
+
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow
+let mainWindow, box
 
 function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({width: 800, height: 600})
+  var webviewEventHandler = null;
+
 
   // and load the index.html of the app.
   mainWindow.loadURL(`file://${__dirname}/index.html`)
@@ -18,6 +24,21 @@ function createWindow () {
   // Open the DevTools.
   mainWindow.webContents.openDevTools()
 
+  ipcMain.on('entered_text', (event, arg) => {
+    //console.log(arg); 
+    if(webviewEventHandler !== null && typeof webviewEventHandler !== "undefined") {
+      webviewEventHandler.sender.send('message_received', arg);
+    } 
+    else {
+      console.error("Webview message sender - null");
+    }
+  }); 
+
+  ipcMain.on('init_webview', (event, arg) => {
+    webviewEventHandler = event;
+    console.log(arg);
+  }); 
+  
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
     // Dereference the window object, usually you would store windows
@@ -45,7 +66,7 @@ app.on('activate', function () {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) {
-    createWindow()
+    CreateWindow()
   }
 })
 
